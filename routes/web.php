@@ -11,6 +11,24 @@
 |
 */
 
+use App\Http\Controllers\TaskController;
+
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Turn Off Auth Routes Not Being Used
+//Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+
+/**
+ * Tasks
+ */
+Route::resource('/task', 'TaskController');
+Route::post('/updateAllPriorities', 'TaskController@updateAllPriorities');
+
+/**
+ * Projects
+ */
+Route::get('/project', 'ProjectController@index');

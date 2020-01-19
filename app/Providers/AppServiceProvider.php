@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use App\Http\Repositories\TaskInterface;
+use App\Http\Repositories\TaskRepository;
+use App\Task;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +17,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind(TaskInterface::class, function ($app) {
+            return new TaskRepository(new Task());
+        });
     }
 
     /**
@@ -23,6 +29,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Schema::defaultStringLength(191);
     }
 }

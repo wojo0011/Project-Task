@@ -1,3 +1,30 @@
+<h1>Tasks Project</h1>
+<table>
+    <tr>
+        <td><strong>Author:</strong>Wojtek Matwiejczyk</td>
+    </tr>
+    <tr>
+        <td><strong>Date:</strong> 2020-01-19</td>
+    </tr>
+</table>
+
+<h4>Requirements:</h4>
+<p>
+    Create a very simple Laravel web application for task management: -Create task (info to save: task name, priority, timestamps) -Edit task -Delete task -Reorder tasks with drag and drop in the browser. Priority should automatically be updated based on this. #1 priority goes at top, #2 next down and so on. -Tasks should be saved to a mysql table.
+    BONUS POINT: add project functionality to the tasks. User should be able to select a project from a dropdown and only view tasks associated with that project.
+</p>
+
+<h4>How To Setup:</h4>
+- Run Command in Project directory CLI <strong>'composer dumpautoload'</strong>.
+- Setup and Run <strong>[WAMP Server](http://www.wampserver.com/en/)</strong>.
+- Create Database named <strong>'project'</strong>.
+- Create tables by running migration command <strong>'php artisan migrate'</strong>.
+- Populate tables by running seeder command <strong>'php artisan db:seed'</strong>.
+- You may have to install npm by running command <strong>'npm install'</strong>.
+- Build the FrontEnd by running command <strong>'npm run dev'</strong>.
+- Serve the website by running command <strong>'php artisan serve'</strong>.
+- Questions or Comments Email: <strong>corewebmedia@gmail.com</strong>
+
 <p align="center"><img src="https://res.cloudinary.com/dtfbvvkyp/image/upload/v1566331377/laravel-logolockup-cmyk-red.svg" width="400"></p>
 
 <p align="center">
