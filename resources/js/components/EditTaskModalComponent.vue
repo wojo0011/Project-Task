@@ -12,11 +12,19 @@
                                 <div class="col-md-12">
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
-                                            <span v-if="!UI.editTaskBusy" class="input-group-text" id="editTask">Edit Task</span>
+                                            <span v-if="!UI.editTaskBusy && !UI.editTaskInputError" class="input-group-text" id="editTask">Edit Task</span>
                                             <span v-if="UI.editTaskBusy" class="input-group-text" id="editTask"><i class="fas fa-spin fa-spinner"></i></span>
+                                            <span v-if="UI.editTaskInputError" class="input-group-text text-danger alert-danger" id="newTask"><i class="fas fa-exclamation-triangle"></i></span>
                                         </div>
                                         <input type="text" class="form-control new-task-input" v-model="Data.editTask.name" placeholder="editTask" aria-label="editTask" aria-describedby="editTask">
                                         <v-select class="input-grouped-v-select" label="name" v-model="Data.editTask.project.data" :options="Data.projects" :clearable="false"></v-select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="alert alert-danger" v-if="UI.editTaskInputErrorMessage">
+                                        {{ UI.editTaskInputErrorMessage }}
                                     </div>
                                 </div>
                             </div>
@@ -35,6 +43,9 @@
     import Vue from 'vue';
     import miniToastr from 'mini-toastr';
     import VModal from 'vue-js-modal';
+    import { editTaskFrontEndValidationMixin } from '../mixins/editTaskFrontEndValidation';
+    import {editTaskServerValidationMixin} from "../mixins/editTaskServerValidation";
+
     Vue.use(VModal);
 
     miniToastr.init()// config can be passed here miniToastr.init(config)
@@ -53,39 +64,49 @@
                 },
                 UI: {
                     editTaskBusy: false,
+                    editTaskInputError: false,
+                    editTaskInputErrorMessage: false
                 },
             }
         },
+        mixins: [editTaskFrontEndValidationMixin, editTaskServerValidationMixin],
         methods: {
             updateTask() {
                 /** SHOW USER SYSTEM IS WORKING ON CREATING A NEW TASK **/
                 this.UI.editTaskBusy=true;
-                let self = this;
-                /** MAKE API CALL TO DELETE SELECTED TASK **/
-                axios({
-                    method: 'put',
-                    url: '/task/' +self.Data.editTask.id,
-                    params: self.Data.editTask
-                }).then(response => {
-                    self.UI.editTaskBusy=false;
-                    self.Data.editTask = response.data.data;
-                    miniToastr.success("Update Task '" + self.Data.editTask.name + "'.", "Updated Task Successfully");
-                    self.hideEditTaskModal();
-                    self.$parent.getTasks(this.Data.selectedProject);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
+                this.$Progress.start();
+
+                if(this.editTaskFrontEndValidationMixin(miniToastr, this)) {
+                    let self = this;
+                    /** MAKE API CALL TO DELETE SELECTED TASK **/
+                    axios({
+                        method: 'put',
+                        url: '/task/' +self.Data.editTask.id,
+                        params: self.Data.editTask
+                    }).then(response => {
+                        self.UI.editTaskBusy=false;
+                        self.Data.editTask = response.data.data;
+                        miniToastr.success("Update Task '" + self.Data.editTask.name + "'.", "Updated Task Successfully");
+                        self.hideEditTaskModal();
+                        self.$parent.getTasks(this.Data.selectedProject);
+                    }).catch(function (error) {
+                        self.editTaskServerValidationMixin(error,miniToastr,self);
+                    });
+                }
             },
             hideEditTaskModal () {
+                this.UI.editTaskBusy=false;
+                this.UI.editTaskInputError = false;
+                this.UI.editTaskInputErrorMessage = '';
                 this.$modal.hide('edit-task-modal');
+
             },
             beforeOpen(event) {
                 this.Data.selectedTaskIndex = event.params.selectedTaskIndex;
                 this.Data.editTask = event.params.task;
                 this.Data.projects = event.params.projects;
                 this.Data.selectedProject = event.params.selectedProject;
-            }
+            },
         },
     }
 </script>

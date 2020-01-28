@@ -15,6 +15,8 @@ use League\Fractal\Pagination\IlluminatePaginatorAdapter;
 use Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Input;
+use Illuminate\Validation\Rule;
+
 
 class TaskController extends Controller
 {
@@ -87,6 +89,8 @@ class TaskController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required|integer|exists:task',
+            'name' => ['required','max:20', Rule::unique('task')->whereNULL('deleted_at')->ignore($request->id)],
+            'priority' => 'required|integer'
         ]);
 
         if ($validator->fails()) {

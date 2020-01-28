@@ -8923,6 +8923,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var mini_toastr__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! mini-toastr */ "./node_modules/mini-toastr/mini-toastr.js");
 /* harmony import */ var vue_js_modal__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue-js-modal */ "./node_modules/vue-js-modal/dist/index.js");
 /* harmony import */ var vue_js_modal__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(vue_js_modal__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _mixins_editTaskFrontEndValidation__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../mixins/editTaskFrontEndValidation */ "./resources/js/mixins/editTaskFrontEndValidation.js");
+/* harmony import */ var _mixins_editTaskServerValidation__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../mixins/editTaskServerValidation */ "./resources/js/mixins/editTaskServerValidation.js");
 //
 //
 //
@@ -8956,6 +8958,16 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+
+
 
 
 
@@ -8976,34 +8988,44 @@ mini_toastr__WEBPACK_IMPORTED_MODULE_1__["default"].init(); // config can be pas
         selectedProject: null
       },
       UI: {
-        editTaskBusy: false
+        editTaskBusy: false,
+        editTaskInputError: false,
+        editTaskInputErrorMessage: false
       }
     };
   },
+  mixins: [_mixins_editTaskFrontEndValidation__WEBPACK_IMPORTED_MODULE_3__["editTaskFrontEndValidationMixin"], _mixins_editTaskServerValidation__WEBPACK_IMPORTED_MODULE_4__["editTaskServerValidationMixin"]],
   methods: {
     updateTask: function updateTask() {
       var _this = this;
 
       /** SHOW USER SYSTEM IS WORKING ON CREATING A NEW TASK **/
       this.UI.editTaskBusy = true;
-      var self = this;
-      /** MAKE API CALL TO DELETE SELECTED TASK **/
+      this.$Progress.start();
 
-      axios({
-        method: 'put',
-        url: '/task/' + self.Data.editTask.id,
-        params: self.Data.editTask
-      }).then(function (response) {
-        self.UI.editTaskBusy = false;
-        self.Data.editTask = response.data.data;
-        mini_toastr__WEBPACK_IMPORTED_MODULE_1__["default"].success("Update Task '" + self.Data.editTask.name + "'.", "Updated Task Successfully");
-        self.hideEditTaskModal();
-        self.$parent.getTasks(_this.Data.selectedProject);
-      })["catch"](function (error) {
-        console.log(error);
-      });
+      if (this.editTaskFrontEndValidationMixin(mini_toastr__WEBPACK_IMPORTED_MODULE_1__["default"], this)) {
+        var self = this;
+        /** MAKE API CALL TO DELETE SELECTED TASK **/
+
+        axios({
+          method: 'put',
+          url: '/task/' + self.Data.editTask.id,
+          params: self.Data.editTask
+        }).then(function (response) {
+          self.UI.editTaskBusy = false;
+          self.Data.editTask = response.data.data;
+          mini_toastr__WEBPACK_IMPORTED_MODULE_1__["default"].success("Update Task '" + self.Data.editTask.name + "'.", "Updated Task Successfully");
+          self.hideEditTaskModal();
+          self.$parent.getTasks(_this.Data.selectedProject);
+        })["catch"](function (error) {
+          self.editTaskServerValidationMixin(error, mini_toastr__WEBPACK_IMPORTED_MODULE_1__["default"], self);
+        });
+      }
     },
     hideEditTaskModal: function hideEditTaskModal() {
+      this.UI.editTaskBusy = false;
+      this.UI.editTaskInputError = false;
+      this.UI.editTaskInputErrorMessage = '';
       this.$modal.hide('edit-task-modal');
     },
     beforeOpen: function beforeOpen(event) {
@@ -9111,6 +9133,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var mini_toastr__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! mini-toastr */ "./node_modules/mini-toastr/mini-toastr.js");
 /* harmony import */ var vue_js_modal__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue-js-modal */ "./node_modules/vue-js-modal/dist/index.js");
 /* harmony import */ var vue_js_modal__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(vue_js_modal__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _mixins_addTaskServerValidation__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../mixins/addTaskServerValidation */ "./resources/js/mixins/addTaskServerValidation.js");
+/* harmony import */ var _mixins_addTaskFrontEndValidation__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../mixins/addTaskFrontEndValidation */ "./resources/js/mixins/addTaskFrontEndValidation.js");
+/* harmony import */ var vue_progressbar__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue-progressbar */ "./node_modules/vue-progressbar/dist/vue-progressbar.js");
+/* harmony import */ var vue_progressbar__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(vue_progressbar__WEBPACK_IMPORTED_MODULE_6__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -9188,10 +9225,19 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+
+
+vue__WEBPACK_IMPORTED_MODULE_0___default.a.use(vue_progressbar__WEBPACK_IMPORTED_MODULE_6___default.a, {
+  color: 'rgb(143, 255, 199)',
+  failedColor: 'red',
+  height: '2px'
+});
 vue__WEBPACK_IMPORTED_MODULE_0___default.a.use(vue_js_modal__WEBPACK_IMPORTED_MODULE_3___default.a);
 mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].init(); // config can be passed here miniToastr.init(config)
 
 /* harmony default export */ __webpack_exports__["default"] = ({
+  mixins: [_mixins_addTaskServerValidation__WEBPACK_IMPORTED_MODULE_4__["addTaskServerValidationMixin"], _mixins_addTaskFrontEndValidation__WEBPACK_IMPORTED_MODULE_5__["addTaskFrontEndValidationMixin"]],
   data: function data() {
     return {
       Data: {
@@ -9250,8 +9296,10 @@ mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].init(); // config can be pas
       var _this2 = this;
 
       var Project = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-
+      this.$Progress.start();
+      this.UI.loadingTasks = true;
       /** NO PROJECT SELECTED - SET PROJECT TO ALL PROJECTS **/
+
       if (Project === null) {
         Project = {
           id: 0
@@ -9274,8 +9322,14 @@ mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].init(); // config can be pas
         }
       }).then(function (response) {
         _this2.Data.tasks = response.data.data;
+
+        _this2.$Progress.finish();
+
+        _this2.UI.loadingTasks = false;
       })["catch"](function (error) {
         console.log(error);
+        this.$Progress.fail();
+        this.UI.loadingTasks = false;
       });
     },
 
@@ -9283,53 +9337,38 @@ mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].init(); // config can be pas
      * HANDLES CREATE A NEW TASK
      */
     addTask: function addTask() {
+      var _this3 = this;
+
       /** SHOW USER SYSTEM IS WORKING ON CREATING A NEW TASK **/
       this.UI.newTaskBusy = true;
-      /** FRONTEND VALIDATE NEW TASK **/
+      this.$Progress.start();
 
-      if (this.Data.newTask != null) {
-        /** NEW TASK NAME MINIMUM LENGTH 3 **/
-        if (this.Data.newTask.length < 3) {
-          this.UI.newTaskInputError = true;
-          this.UI.newTaskErrorMessage = 'New Task Name Must Be More Than 2 Characters In Length';
-          mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].error("New Task Name Must Be More Than 2 Characters In Length.", "Failed to Add Task");
-          this.UI.newTaskBusy = false;
-          /** NEW TASK NAME MAXIMUM LENGTH 20 **/
-        } else if (this.Data.newTask.length > 20) {
-          this.UI.newTaskInputError = true;
-          this.UI.newTaskErrorMessage = 'New Task Name Must Be Less Than 21 Characters In Length';
-          mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].error("New Task Name Must Be Less Than 21 Characters In Length.", "Failed to Add Task");
-          this.UI.newTaskBusy = false;
-        } else {
-          this.UI.newTaskInputError = false;
-          this.UI.newTaskErrorMessage = null;
-          var self = this;
-          /** MAKE API CALL TO STORE THE NEW TASK **/
+      if (this.addTaskFrontEndValidationMixin(mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"], this)) {
+        var self = this;
+        /** MAKE API CALL TO STORE THE NEW TASK **/
 
-          axios({
-            method: 'post',
-            url: '/task',
-            data: {
-              name: self.Data.newTask,
-              project_id: self.Data.newSelectedProject.id
-            }
-          }).then(function (response) {
-            /** PUSH NEWLY SAVED TASK TO BOTTOM OF LIST **/
-            // self.Data.tasks.push(response.data.data);
-            self.UI.newTaskBusy = false;
-            mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].success("Added Task '" + self.newTask + "'.", "Added Task Successfully");
-            self.getTasks(self.selectedProject);
-            self.Data.newTask = '';
-          })["catch"](function (error) {
-            mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].error("Failed to Add Task.", "Error"); // console.log(error);
-          });
-        }
-      } else {
-        /** NEW TASK NAME INPUT BLANK **/
-        this.UI.newTaskInputError = true;
-        this.UI.newTaskErrorMessage = 'New Task Name Must Not Be Blank';
-        mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].error("New Task Name Must Not Be Blank.", "Failed to Add Task");
-        this.UI.newTaskBusy = false;
+        axios({
+          method: 'post',
+          url: '/task',
+          data: {
+            name: self.Data.newTask,
+            project_id: self.Data.newSelectedProject.id
+          }
+        }).then(function (response) {
+          self.UI.newTaskBusy = false;
+          mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].success("Added Task '" + self.newTask + "'.", "Added Task Successfully");
+          self.Data.newTask = '';
+          _this3.UI.newTaskInputError = false;
+          /** Refresh Task List **/
+
+          _this3.$Progress.increase(25);
+
+          self.getTasks(self.selectedProject);
+
+          _this3.$Progress.finish();
+        })["catch"](function (error) {
+          self.addTaskServerValidationMixin(error, mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"], self);
+        });
       }
     },
 
@@ -9381,15 +9420,15 @@ mini_toastr__WEBPACK_IMPORTED_MODULE_2__["default"].init(); // config can be pas
       });
     },
     getProjects: function getProjects() {
-      var _this3 = this;
+      var _this4 = this;
 
       axios.get('/project', {
         params: {
           all: true
         }
       }).then(function (response) {
-        _this3.Data.projects = response.data.data;
-        _this3.Data.newSelectedProject = _this3.Data.projects[0];
+        _this4.Data.projects = response.data.data;
+        _this4.Data.newSelectedProject = _this4.Data.projects[0];
       })["catch"](function (error) {
         console.log(error);
       });
@@ -14064,7 +14103,7 @@ exports = module.exports = __webpack_require__(/*! ../../../node_modules/css-loa
 
 
 // module
-exports.push([module.i, "\n.merge-left[data-v-50814c9d] {\n    border-top-left-radius: unset;\n    border-bottom-left-radius: unset;\n}\n.task-item[data-v-50814c9d]:first-child {\n    border-top-left-radius: 5px;\n    border-top-right-radius: 5px;\n}\n.task-item[data-v-50814c9d]:last-child {\n    border-bottom-left-radius: 5px;\n    border-bottom-right-radius: 5px;\n}\n.task-item[data-v-50814c9d] {\n    margin: 0 5px 0 5px;\n    border: 1px solid rgba(0, 0, 0, 0.125);\n}\n.task-item div[data-v-50814c9d] {\n    line-height: 36px;\n}\n.btn-info[data-v-50814c9d] {\n    color: #ffffff;\n}\n.noDrop[data-v-50814c9d] {\n    cursor: no-drop;\n}\n.drop[data-v-50814c9d] {\n    cursor: -webkit-grab;\n    cursor: grab;\n}\n.vs__dropdown-toggle[data-v-50814c9d] {\n    padding: 9px 10px 10px;\n}\n.new-task-input[data-v-50814c9d] {\n    line-height: inherit;\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    height: 47px;\n}\n.btn-refresh[data-v-50814c9d] {\n    border: 1px solid rgba(60,60,60,.26);\n}\n", ""]);
+exports.push([module.i, "\n.merge-left[data-v-50814c9d] {\n    border-top-left-radius: unset;\n    border-bottom-left-radius: unset;\n}\n.task-item[data-v-50814c9d]:first-child {\n    border-top-left-radius: 5px;\n    border-top-right-radius: 5px;\n}\n.task-item[data-v-50814c9d]:last-child {\n    border-bottom-left-radius: 5px;\n    border-bottom-right-radius: 5px;\n}\n.task-item[data-v-50814c9d] {\n    margin: 0 5px 0 5px;\n    border: 1px solid rgba(0, 0, 0, 0.125);\n}\n.task-item div[data-v-50814c9d] {\n    line-height: 36px;\n}\n.btn-info[data-v-50814c9d] {\n    color: #ffffff;\n}\n.noDrop[data-v-50814c9d] {\n    cursor: no-drop;\n}\n.drop[data-v-50814c9d] {\n    cursor: -webkit-grab;\n    cursor: grab;\n}\n.vs__dropdown-toggle[data-v-50814c9d] {\n    padding: 9px 10px 10px;\n}\n.new-task-input[data-v-50814c9d] {\n    line-height: inherit;\n    margin: 0;\n    font-family: inherit;\n    font-size: inherit;\n    height: 47px;\n}\n.btn-refresh[data-v-50814c9d] {\n    border: 1px solid rgba(60,60,60,.26);\n}\n\n", ""]);
 
 // exports
 
@@ -45992,7 +46031,7 @@ var render = function() {
                         { staticClass: "input-group mb-3" },
                         [
                           _c("div", { staticClass: "input-group-prepend" }, [
-                            !_vm.UI.editTaskBusy
+                            !_vm.UI.editTaskBusy && !_vm.UI.editTaskInputError
                               ? _c(
                                   "span",
                                   {
@@ -46013,6 +46052,22 @@ var render = function() {
                                   [
                                     _c("i", {
                                       staticClass: "fas fa-spin fa-spinner"
+                                    })
+                                  ]
+                                )
+                              : _vm._e(),
+                            _vm._v(" "),
+                            _vm.UI.editTaskInputError
+                              ? _c(
+                                  "span",
+                                  {
+                                    staticClass:
+                                      "input-group-text text-danger alert-danger",
+                                    attrs: { id: "newTask" }
+                                  },
+                                  [
+                                    _c("i", {
+                                      staticClass: "fas fa-exclamation-triangle"
                                     })
                                   ]
                                 )
@@ -46068,6 +46123,20 @@ var render = function() {
                         ],
                         1
                       )
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "row" }, [
+                    _c("div", { staticClass: "col-md-12" }, [
+                      _vm.UI.editTaskInputErrorMessage
+                        ? _c("div", { staticClass: "alert alert-danger" }, [
+                            _vm._v(
+                              "\n                                    " +
+                                _vm._s(_vm.UI.editTaskInputErrorMessage) +
+                                "\n                                "
+                            )
+                          ])
+                        : _vm._e()
                     ])
                   ])
                 ]),
@@ -46229,19 +46298,32 @@ var render = function() {
                 _c("div", { staticClass: "col-md-2" }, [
                   _c("strong", [_vm._v("Actions")]),
                   _vm._v(" "),
-                  _c(
-                    "div",
-                    {
-                      staticClass:
-                        "btn btn-light btn-refresh btn-sm float-right",
-                      on: {
-                        click: function($event) {
-                          return _vm.getTasks(_vm.selectedProject)
-                        }
-                      }
-                    },
-                    [_c("i", { staticClass: "fas fa-sync-alt" })]
-                  )
+                  !_vm.UI.loadingTasks
+                    ? _c(
+                        "div",
+                        {
+                          staticClass:
+                            "btn btn-light btn-refresh btn-sm float-right",
+                          on: {
+                            click: function($event) {
+                              return _vm.getTasks(_vm.selectedProject)
+                            }
+                          }
+                        },
+                        [_c("i", { staticClass: "fas fa-sync-alt" })]
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _vm.UI.loadingTasks
+                    ? _c(
+                        "div",
+                        {
+                          staticClass:
+                            "btn btn-light btn-refresh btn-sm float-right"
+                        },
+                        [_c("i", { staticClass: "fas fa-sync-alt fa-spin" })]
+                      )
+                    : _vm._e()
                 ])
               ]),
               _vm._v(" "),
@@ -46252,8 +46334,15 @@ var render = function() {
                         "span",
                         { staticClass: "float-right text-danger small" },
                         [
-                          _c("i", { staticClass: "fas fa-mouse" }),
-                          _vm._v(" Drag And Drop / Re Order Disabled")
+                          _c("img", {
+                            attrs: {
+                              width: "20px",
+                              height: "20px",
+                              src: __webpack_require__(/*! ../../svg/mouse-solid-red.svg */ "./resources/svg/mouse-solid-red.svg"),
+                              alt: "Mouse Icon"
+                            }
+                          }),
+                          _vm._v("\nDrag And Drop / Re Order Disabled")
                         ]
                       )
                     : _vm._e(),
@@ -46263,8 +46352,15 @@ var render = function() {
                         "span",
                         { staticClass: "float-right text-success small" },
                         [
-                          _c("i", { staticClass: "fas fa-mouse" }),
-                          _vm._v(" Drag And Drop / Re Order Enabled")
+                          _c("img", {
+                            attrs: {
+                              width: "20px",
+                              height: "20px",
+                              src: __webpack_require__(/*! ../../svg/mouse-solid-green.svg */ "./resources/svg/mouse-solid-green.svg"),
+                              alt: "Mouse Icon"
+                            }
+                          }),
+                          _vm._v("\nDrag And Drop / Re Order Enabled")
                         ]
                       )
                     : _vm._e()
@@ -46371,7 +46467,7 @@ var render = function() {
                   ? _c("div", { staticClass: "row" }, [
                       _c("div", { staticClass: "col-md-12 alert alert-info" }, [
                         _vm._v(
-                          "\n                            There Are No Tasks In The Project\n                        "
+                          "\n                               There Are No Tasks In The Project\n                           "
                         )
                       ])
                     ])
@@ -46388,27 +46484,28 @@ var render = function() {
                     { staticClass: "input-group mb-3" },
                     [
                       _c("div", { staticClass: "input-group-prepend" }, [
-                        !_vm.UI.newTaskBusy
-                          ? _c(
-                              "span",
-                              {
-                                staticClass: "input-group-text",
-                                attrs: { id: "newTask" }
-                              },
-                              [_vm._v("New Task")]
-                            )
+                        !_vm.UI.newTaskBusy && !_vm.UI.newTaskInputError
+                          ? _c("span", { staticClass: "input-group-text" }, [
+                              _vm._v("New Task")
+                            ])
                           : _vm._e(),
                         _vm._v(" "),
-                        _vm.UI.newTaskBusy
+                        _vm.UI.newTaskBusy && !_vm.UI.newTaskInputError
+                          ? _c("span", { staticClass: "input-group-text" }, [
+                              _c("i", { staticClass: "fas fa-spin fa-spinner" })
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.UI.newTaskInputError
                           ? _c(
                               "span",
                               {
-                                staticClass: "input-group-text",
-                                attrs: { id: "newTask" }
+                                staticClass:
+                                  "input-group-text text-danger alert-danger"
                               },
                               [
                                 _c("i", {
-                                  staticClass: "fas fa-spin fa-spinner"
+                                  staticClass: "fas fa-exclamation-triangle"
                                 })
                               ]
                             )
@@ -46498,9 +46595,9 @@ var render = function() {
                         },
                         [
                           _vm._v(
-                            "\n                                " +
+                            "\n                                   " +
                               _vm._s(_vm.UI.newTaskErrorMessage) +
-                              "\n                            "
+                              "\n                               "
                           )
                         ]
                       )
@@ -46692,6 +46789,18 @@ function normalizeComponent (
     options: options
   }
 }
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-progressbar/dist/vue-progressbar.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/vue-progressbar/dist/vue-progressbar.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+!function(t,o){ true?module.exports=o():undefined}(this,function(){"use strict";!function(){if("undefined"!=typeof document){var t=document.head||document.getElementsByTagName("head")[0],o=document.createElement("style"),i=" .__cov-progress { opacity: 1; z-index: 999999; } ";o.type="text/css",o.styleSheet?o.styleSheet.cssText=i:o.appendChild(document.createTextNode(i)),t.appendChild(o)}}();var t="undefined"!=typeof window,r={render:function(){var t=this,o=t.$createElement;return(t._self._c||o)("div",{staticClass:"__cov-progress",style:t.style})},staticRenderFns:[],name:"VueProgress",serverCacheKey:function(){return"Progress"},computed:{style:function(){var t=this.progress,o=t.options,i=!!o.show,e=o.location,s={"background-color":o.canSuccess?o.color:o.failedColor,opacity:o.show?1:0,position:o.position};return"top"===e||"bottom"===e?("top"===e?s.top="0px":s.bottom="0px",o.inverse?s.right="0px":s.left="0px",s.width=t.percent+"%",s.height=o.thickness,s.transition=(i?"width "+o.transition.speed+", ":"")+"opacity "+o.transition.opacity):"left"!==e&&"right"!==e||("left"===e?s.left="0px":s.right="0px",o.inverse?s.top="0px":s.bottom="0px",s.height=t.percent+"%",s.width=o.thickness,s.transition=(i?"height "+o.transition.speed+", ":"")+"opacity "+o.transition.opacity),s},progress:function(){return t?window.VueProgressBarEventBus.RADON_LOADING_BAR:{percent:0,options:{canSuccess:!0,show:!1,color:"rgb(19, 91, 55)",failedColor:"red",thickness:"2px",transition:{speed:"0.2s",opacity:"0.6s",termination:300},location:"top",autoRevert:!0,inverse:!1}}}}};return{install:function(o){var t=1<arguments.length&&void 0!==arguments[1]?arguments[1]:{},i=(o.version.split(".")[0],"undefined"!=typeof window),e={$vm:null,state:{tFailColor:"",tColor:"",timer:null,cut:0},init:function(t){this.$vm=t},start:function(t){var o=this;this.$vm&&(t||(t=3e3),this.$vm.RADON_LOADING_BAR.percent=0,this.$vm.RADON_LOADING_BAR.options.show=!0,this.$vm.RADON_LOADING_BAR.options.canSuccess=!0,this.state.cut=1e4/Math.floor(t),clearInterval(this.state.timer),this.state.timer=setInterval(function(){o.increase(o.state.cut*Math.random()),95<o.$vm.RADON_LOADING_BAR.percent&&o.$vm.RADON_LOADING_BAR.options.autoFinish&&o.finish()},100))},set:function(t){this.$vm.RADON_LOADING_BAR.options.show=!0,this.$vm.RADON_LOADING_BAR.options.canSuccess=!0,this.$vm.RADON_LOADING_BAR.percent=Math.floor(t)},get:function(){return Math.floor(this.$vm.RADON_LOADING_BAR.percent)},increase:function(t){this.$vm.RADON_LOADING_BAR.percent=Math.min(99,this.$vm.RADON_LOADING_BAR.percent+Math.floor(t))},decrease:function(t){this.$vm.RADON_LOADING_BAR.percent=this.$vm.RADON_LOADING_BAR.percent-Math.floor(t)},hide:function(){var t=this;clearInterval(this.state.timer),this.state.timer=null,setTimeout(function(){t.$vm.RADON_LOADING_BAR.options.show=!1,o.nextTick(function(){setTimeout(function(){t.$vm.RADON_LOADING_BAR.percent=0},100),t.$vm.RADON_LOADING_BAR.options.autoRevert&&setTimeout(function(){t.revert()},300)})},this.$vm.RADON_LOADING_BAR.options.transition.termination)},pause:function(){clearInterval(this.state.timer)},finish:function(){this.$vm&&(this.$vm.RADON_LOADING_BAR.percent=100,this.hide())},fail:function(){this.$vm.RADON_LOADING_BAR.options.canSuccess=!1,this.$vm.RADON_LOADING_BAR.percent=100,this.hide()},setFailColor:function(t){this.$vm.RADON_LOADING_BAR.options.failedColor=t},setColor:function(t){this.$vm.RADON_LOADING_BAR.options.color=t},setLocation:function(t){this.$vm.RADON_LOADING_BAR.options.location=t},setTransition:function(t){this.$vm.RADON_LOADING_BAR.options.transition=t},tempFailColor:function(t){this.state.tFailColor=this.$vm.RADON_LOADING_BAR.options.failedColor,this.$vm.RADON_LOADING_BAR.options.failedColor=t},tempColor:function(t){this.state.tColor=this.$vm.RADON_LOADING_BAR.options.color,this.$vm.RADON_LOADING_BAR.options.color=t},tempLocation:function(t){this.state.tLocation=this.$vm.RADON_LOADING_BAR.options.location,this.$vm.RADON_LOADING_BAR.options.location=t},tempTransition:function(t){this.state.tTransition=this.$vm.RADON_LOADING_BAR.options.transition,this.$vm.RADON_LOADING_BAR.options.transition=t},revertColor:function(){this.$vm.RADON_LOADING_BAR.options.color=this.state.tColor,this.state.tColor=""},revertFailColor:function(){this.$vm.RADON_LOADING_BAR.options.failedColor=this.state.tFailColor,this.state.tFailColor=""},revertLocation:function(){this.$vm.RADON_LOADING_BAR.options.location=this.state.tLocation,this.state.tLocation=""},revertTransition:function(){this.$vm.RADON_LOADING_BAR.options.transition=this.state.tTransition,this.state.tTransition={}},revert:function(){this.$vm.RADON_LOADING_BAR.options.autoRevert&&(this.state.tColor&&this.revertColor(),this.state.tFailColor&&this.revertFailColor(),this.state.tLocation&&this.revertLocation(),!this.state.tTransition||void 0===this.state.tTransition.speed&&void 0===this.state.tTransition.opacity||this.revertTransition())},parseMeta:function(t){for(var o in t.func){var i=t.func[o];switch(i.call){case"color":switch(i.modifier){case"set":this.setColor(i.argument);break;case"temp":this.tempColor(i.argument)}break;case"fail":switch(i.modifier){case"set":this.setFailColor(i.argument);break;case"temp":this.tempFailColor(i.argument)}break;case"location":switch(i.modifier){case"set":this.setLocation(i.argument);break;case"temp":this.tempLocation(i.argument)}break;case"transition":switch(i.modifier){case"set":this.setTransition(i.argument);break;case"temp":this.tempTransition(i.argument)}}}}},s=function(t,o){for(var i,e,s=1;s<arguments.length;++s)for(i in e=arguments[s])Object.prototype.hasOwnProperty.call(e,i)&&(t[i]=e[i]);return t}({canSuccess:!0,show:!1,color:"#73ccec",position:"fixed",failedColor:"red",thickness:"2px",transition:{speed:"0.2s",opacity:"0.6s",termination:300},autoRevert:!0,location:"top",inverse:!1,autoFinish:!0},t),n=new o({data:{RADON_LOADING_BAR:{percent:0,options:s}}});i&&(window.VueProgressBarEventBus=n,e.init(n)),o.component("vue-progress-bar",r),o.prototype.$Progress=e}}});
 
 
 /***/ }),
@@ -59246,6 +59355,264 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/mixins/addTaskFrontEndValidation.js":
+/*!**********************************************************!*\
+  !*** ./resources/js/mixins/addTaskFrontEndValidation.js ***!
+  \**********************************************************/
+/*! exports provided: addTaskFrontEndValidationMixin */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addTaskFrontEndValidationMixin", function() { return addTaskFrontEndValidationMixin; });
+var addTaskFrontEndValidationMixin = {
+  data: function data() {
+    return {
+      Data: {
+        newTask: null
+      },
+      UI: {
+        newTaskInputError: false,
+        newTaskErrorMessage: '',
+        newTaskBusy: false
+      }
+    };
+  },
+  methods: {
+    addTaskFrontEndValidationMixin: function addTaskFrontEndValidationMixin(miniToastr, self) {
+      console.log(self, self.Data, self.UI);
+      /** FRONTEND VALIDATE NEW TASK **/
+
+      if (self.Data.newTask != null) {
+        /** NEW TASK NAME MINIMUM LENGTH 3 **/
+        if (self.Data.newTask.length < 3) {
+          self.UI.newTaskInputError = true;
+          self.UI.newTaskErrorMessage = 'New Task Name Must Be More Than 2 Characters In Length';
+          miniToastr.error("New Task Name Must Be More Than 2 Characters In Length.", "Failed to Add Task");
+          self.UI.newTaskBusy = false;
+          this.$Progress.fail();
+          return false;
+          /** NEW TASK NAME MAXIMUM LENGTH 20 **/
+        } else if (this.Data.newTask.length > 20) {
+          self.UI.newTaskInputError = true;
+          self.UI.newTaskErrorMessage = 'New Task Name Must Be Less Than 21 Characters In Length';
+          miniToastr.error("New Task Name Must Be Less Than 21 Characters In Length.", "Failed to Add Task");
+          self.UI.newTaskBusy = false;
+          this.$Progress.fail();
+          return false;
+        } else {
+          self.UI.newTaskInputError = false;
+          self.UI.newTaskErrorMessage = null;
+          this.$Progress.increase(25);
+          return true;
+        }
+      } else {
+        self.UI.newTaskInputError = true;
+        self.UI.newTaskErrorMessage = 'New Task Name Must Not Be Empty';
+        miniToastr.error("New Task Name Must Not Be Empty.", "Failed to Add Task");
+        self.UI.newTaskBusy = false;
+        this.$Progress.fail();
+        return false;
+      }
+    }
+  }
+};
+
+/***/ }),
+
+/***/ "./resources/js/mixins/addTaskServerValidation.js":
+/*!********************************************************!*\
+  !*** ./resources/js/mixins/addTaskServerValidation.js ***!
+  \********************************************************/
+/*! exports provided: addTaskServerValidationMixin */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addTaskServerValidationMixin", function() { return addTaskServerValidationMixin; });
+var addTaskServerValidationMixin = {
+  data: function data() {
+    return {
+      Data: {
+        newTask: null
+      },
+      UI: {
+        newTaskInputError: false,
+        newTaskErrorMessage: '',
+        newTaskBusy: false
+      }
+    };
+  },
+  methods: {
+    addTaskServerValidationMixin: function addTaskServerValidationMixin(error, miniToastr, self) {
+      var namedError = false;
+
+      if (error.response !== undefined) {
+        if (error.response.data !== undefined) {
+          if (error.response.data.name !== undefined) {
+            if (error.response.data.name[0] !== undefined) {
+              namedError = true;
+              miniToastr.error(error.response.data.name[0], "Error");
+              self.UI.newTaskInputError = true;
+              self.UI.newTaskErrorMessage = error.response.data.name[0];
+              this.$Progress.fail();
+            }
+          }
+        }
+
+        if (!namedError) {
+          miniToastr.error("Failed to Add Task.", "Error");
+          self.UI.newTaskInputError = true;
+          self.UI.newTaskErrorMessage = 'Failed to Add Task.';
+          this.$Progress.fail();
+        }
+      } else {
+        miniToastr.error("Failed to Add Task.", "Error");
+        self.UI.newTaskInputError = true;
+        self.UI.newTaskErrorMessage = 'Failed to Add Task.';
+        this.$Progress.fail();
+      }
+    }
+  }
+};
+
+/***/ }),
+
+/***/ "./resources/js/mixins/editTaskFrontEndValidation.js":
+/*!***********************************************************!*\
+  !*** ./resources/js/mixins/editTaskFrontEndValidation.js ***!
+  \***********************************************************/
+/*! exports provided: editTaskFrontEndValidationMixin */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "editTaskFrontEndValidationMixin", function() { return editTaskFrontEndValidationMixin; });
+var editTaskFrontEndValidationMixin = {
+  data: function data() {
+    return {
+      Data: {
+        editTask: {
+          name: null,
+          project: {
+            data: null
+          }
+        },
+        projects: [],
+        selectedProject: null
+      },
+      UI: {
+        editTaskBusy: false,
+        editTaskInputError: false,
+        editTaskInputErrorMessage: false
+      }
+    };
+  },
+  methods: {
+    editTaskFrontEndValidationMixin: function editTaskFrontEndValidationMixin(miniToastr, self) {
+      console.log(self, self.Data, self.UI);
+      /** FRONTEND VALIDATE NEW TASK **/
+
+      if (self.Data.editTask.name != null) {
+        /** NEW TASK NAME MINIMUM LENGTH 3 **/
+        if (self.Data.editTask.name.length < 3) {
+          self.UI.editTaskInputError = true;
+          self.UI.editTaskInputErrorMessage = 'New Task Name Must Be More Than 2 Characters In Length';
+          miniToastr.error("New Task Name Must Be More Than 2 Characters In Length.", "Failed to Add Task");
+          self.UI.editTaskBusy = false;
+          this.$Progress.fail();
+          return false;
+          /** NEW TASK NAME MAXIMUM LENGTH 20 **/
+        } else if (this.Data.editTask.name.length > 20) {
+          self.UI.editTaskInputError = true;
+          self.UI.editTaskInputErrorMessage = 'New Task Name Must Be Less Than 21 Characters In Length';
+          miniToastr.error("New Task Name Must Be Less Than 21 Characters In Length.", "Failed to Add Task");
+          self.UI.editTaskBusy = false;
+          this.$Progress.fail();
+          return false;
+        } else {
+          self.UI.editTaskInputError = false;
+          self.UI.editTaskInputErrorMessage = null;
+          this.$Progress.increase(25);
+          return true;
+        }
+      } else {
+        self.UI.editTaskInputError = true;
+        self.UI.editTaskInputErrorMessage = 'New Task Name Must Not Be Empty';
+        miniToastr.error("New Task Name Must Not Be Empty.", "Failed to Add Task");
+        self.UI.editTaskBusy = false;
+        this.$Progress.fail();
+        return false;
+      }
+    }
+  }
+};
+
+/***/ }),
+
+/***/ "./resources/js/mixins/editTaskServerValidation.js":
+/*!*********************************************************!*\
+  !*** ./resources/js/mixins/editTaskServerValidation.js ***!
+  \*********************************************************/
+/*! exports provided: editTaskServerValidationMixin */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "editTaskServerValidationMixin", function() { return editTaskServerValidationMixin; });
+var editTaskServerValidationMixin = {
+  data: function data() {
+    return {
+      Data: {
+        editTask: null
+      },
+      UI: {
+        editTaskInputError: false,
+        editTaskInputErrorMessage: '',
+        editTaskBusy: false
+      }
+    };
+  },
+  methods: {
+    editTaskServerValidationMixin: function editTaskServerValidationMixin(error, miniToastr, self) {
+      var namedError = false;
+
+      if (error.response !== undefined) {
+        if (error.response.data !== undefined) {
+          if (error.response.data.name !== undefined) {
+            if (error.response.data.name[0] !== undefined) {
+              namedError = true;
+              miniToastr.error(error.response.data.name[0], "Error");
+              self.UI.editTaskInputError = true;
+              self.UI.editTaskInputErrorMessage = error.response.data.name[0];
+              self.UI.editTaskBusy = false;
+              this.$Progress.fail();
+            }
+          }
+        }
+
+        if (!namedError) {
+          miniToastr.error("Failed to Update Task.", "Error");
+          self.UI.editTaskInputError = true;
+          self.UI.editTaskInputErrorMessage = 'Failed to Update Task.';
+          miniToastr.error('Failed to Update Task.', "Error");
+          self.UI.editTaskBusy = false;
+          this.$Progress.fail();
+        }
+      } else {
+        miniToastr.error("Failed to Update Task.", "Error");
+        self.UI.editTaskInputError = true;
+        self.UI.editTaskInputErrorMessage = 'Failed to Update Task.';
+        miniToastr.error('Failed to Update Task.', "Error");
+        self.UI.editTaskBusy = false;
+        this.$Progress.fail();
+      }
+    }
+  }
+};
+
+/***/ }),
+
 /***/ "./resources/sass/app.scss":
 /*!*********************************!*\
   !*** ./resources/sass/app.scss ***!
@@ -59254,6 +59621,28 @@ __webpack_require__.r(__webpack_exports__);
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+
+/***/ "./resources/svg/mouse-solid-green.svg":
+/*!*********************************************!*\
+  !*** ./resources/svg/mouse-solid-green.svg ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "/images/mouse-solid-green.svg?42dbdb621657c849a55c4e738c529f25";
+
+/***/ }),
+
+/***/ "./resources/svg/mouse-solid-red.svg":
+/*!*******************************************!*\
+  !*** ./resources/svg/mouse-solid-red.svg ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = "/images/mouse-solid-red.svg?f2f6eadce5389eba61013ee56fba9a5c";
 
 /***/ }),
 

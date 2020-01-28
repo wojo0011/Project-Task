@@ -14,12 +14,22 @@
                             <div class="col-md-3"><strong>Task Name</strong></div>
                             <div class="col-md-3"><strong>Project</strong></div>
                             <div class="col-md-3"><strong>Created At</strong></div>
-                            <div class="col-md-2"><strong>Actions</strong> <div class="btn btn-light btn-refresh btn-sm float-right" @click="getTasks(selectedProject)"><i class="fas fa-sync-alt"></i></div></div>
+                            <div class="col-md-2"><strong>Actions</strong>
+                                <div v-if="!UI.loadingTasks" class="btn btn-light btn-refresh btn-sm float-right" @click="getTasks(selectedProject)">
+                                    <i class="fas fa-sync-alt"></i>
+                                </div>
+                                <div v-if="UI.loadingTasks" class="btn btn-light btn-refresh btn-sm float-right">
+                                    <i class="fas fa-sync-alt fa-spin"></i>
+                                </div>
+
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
-                                <span class="float-right text-danger small" v-if="!UI.dragAndDropEnabled"><i class="fas fa-mouse"></i> Drag And Drop / Re Order Disabled</span>
-                                <span class="float-right text-success small" v-if="UI.dragAndDropEnabled"><i class="fas fa-mouse"></i> Drag And Drop / Re Order Enabled</span>
+                                <span class="float-right text-danger small" v-if="!UI.dragAndDropEnabled"><img width="20px" height="20px" src="../../svg/mouse-solid-red.svg" alt="Mouse Icon">
+ Drag And Drop / Re Order Disabled</span>
+                                <span class="float-right text-success small" v-if="UI.dragAndDropEnabled"><img width="20px" height="20px" src="../../svg/mouse-solid-green.svg" alt="Mouse Icon">
+ Drag And Drop / Re Order Enabled</span>
                             </div>
                         </div>
                     </div>
@@ -48,8 +58,9 @@
                             <div class="col-md-12">
                                 <div class="input-group mb-3">
                                     <div class="input-group-prepend">
-                                        <span v-if="!UI.newTaskBusy" class="input-group-text" id="newTask">New Task</span>
-                                        <span v-if="UI.newTaskBusy" class="input-group-text" id="newTask"><i class="fas fa-spin fa-spinner"></i></span>
+                                        <span v-if="!UI.newTaskBusy && !UI.newTaskInputError" class="input-group-text">New Task</span>
+                                        <span v-if="UI.newTaskBusy && !UI.newTaskInputError" class="input-group-text"><i class="fas fa-spin fa-spinner"></i></span>
+                                        <span v-if="UI.newTaskInputError" class="input-group-text text-danger alert-danger"><i class="fas fa-exclamation-triangle"></i></span>
                                     </div>
                                     <input type="text" class="form-control new-task-input" @keyup.enter="addTask" v-model="Data.newTask" placeholder="Enter New Task" aria-label="newTask" aria-describedby="newTask">
                                     <v-select class="input-grouped-v-select" label="name" v-model="Data.newSelectedProject" :options="Data.projects" :clearable="false"></v-select>
@@ -78,10 +89,21 @@
     import draggable from 'vuedraggable';
     import miniToastr from 'mini-toastr';
     import VModal from 'vue-js-modal';
+    import { addTaskServerValidationMixin } from '../mixins/addTaskServerValidation';
+    import { addTaskFrontEndValidationMixin } from '../mixins/addTaskFrontEndValidation';
+    import VueProgressBar from 'vue-progressbar'
+
+    Vue.use(VueProgressBar, {
+        color: 'rgb(143, 255, 199)',
+        failedColor: 'red',
+        height: '2px'
+    });
+
     Vue.use(VModal);
 
     miniToastr.init()// config can be passed here miniToastr.init(config)
     export default {
+        mixins: [addTaskServerValidationMixin, addTaskFrontEndValidationMixin],
         data() {
             return {
                 Data: {
@@ -128,6 +150,7 @@
              * @param Project
              */
             getTasks(Project = null) {
+                this.$Progress.start(); this.UI.loadingTasks=true;
                 /** NO PROJECT SELECTED - SET PROJECT TO ALL PROJECTS **/
                 if(Project === null) {
                     Project = { id: 0 }
@@ -145,9 +168,13 @@
                     { params: {projectId : Project.id}
                 }).then(response => {
                     this.Data.tasks = response.data.data;
+                    this.$Progress.finish();
+                    this.UI.loadingTasks=false;
                 })
                 .catch(function (error) {
                     console.log(error);
+                    this.$Progress.fail();
+                    this.UI.loadingTasks=false;
                 });
             },
             /**
@@ -156,52 +183,30 @@
             addTask() {
                 /** SHOW USER SYSTEM IS WORKING ON CREATING A NEW TASK **/
                 this.UI.newTaskBusy=true;
+                this.$Progress.start();
 
-                /** FRONTEND VALIDATE NEW TASK **/
-                if(this.Data.newTask != null) {
-                    /** NEW TASK NAME MINIMUM LENGTH 3 **/
-                    if(this.Data.newTask.length < 3) {
-                        this.UI.newTaskInputError = true;
-                        this.UI.newTaskErrorMessage = 'New Task Name Must Be More Than 2 Characters In Length';
-                        miniToastr.error("New Task Name Must Be More Than 2 Characters In Length.", "Failed to Add Task");
-                        this.UI.newTaskBusy=false;
-                    /** NEW TASK NAME MAXIMUM LENGTH 20 **/
-                    } else if (this.Data.newTask.length > 20) {
-                        this.UI.newTaskInputError = true;
-                        this.UI.newTaskErrorMessage = 'New Task Name Must Be Less Than 21 Characters In Length';
-                        miniToastr.error("New Task Name Must Be Less Than 21 Characters In Length.", "Failed to Add Task");
-                        this.UI.newTaskBusy=false;
-                    } else {
+                if(this.addTaskFrontEndValidationMixin(miniToastr, this)) {
+                    let self = this;
+                    /** MAKE API CALL TO STORE THE NEW TASK **/
+                    axios({
+                        method: 'post',
+                        url: '/task',
+                        data: {
+                            name: self.Data.newTask,
+                            project_id: self.Data.newSelectedProject.id
+                        }
+                    }).then(response => {
+                        self.UI.newTaskBusy=false;
+                        miniToastr.success("Added Task '" + self.newTask + "'.", "Added Task Successfully");
+                        self.Data.newTask = '';
                         this.UI.newTaskInputError = false;
-                        this.UI.newTaskErrorMessage = null;
-                        let self = this;
-                        /** MAKE API CALL TO STORE THE NEW TASK **/
-                        axios({
-                            method: 'post',
-                            url: '/task',
-                            data: {
-                                name: self.Data.newTask,
-                                project_id: self.Data.newSelectedProject.id
-                            }
-                        }).then(response => {
-                            /** PUSH NEWLY SAVED TASK TO BOTTOM OF LIST **/
-                            // self.Data.tasks.push(response.data.data);
-                            self.UI.newTaskBusy=false;
-                            miniToastr.success("Added Task '" + self.newTask + "'.", "Added Task Successfully");
-                            self.getTasks(self.selectedProject);
-                            self.Data.newTask = '';
-                        })
-                        .catch(function (error) {
-                            miniToastr.error("Failed to Add Task.", "Error");
-                            // console.log(error);
-                        });
-                    }
-                } else {
-                    /** NEW TASK NAME INPUT BLANK **/
-                    this.UI.newTaskInputError = true;
-                    this.UI.newTaskErrorMessage = 'New Task Name Must Not Be Blank';
-                    miniToastr.error("New Task Name Must Not Be Blank.", "Failed to Add Task");
-                    this.UI.newTaskBusy=false;
+                        /** Refresh Task List **/
+                        this.$Progress.increase(25);
+                        self.getTasks(self.selectedProject);
+                        this.$Progress.finish();
+                    }).catch(function (error) {
+                        self.addTaskServerValidationMixin(error,miniToastr,self);
+                    });
                 }
             },
             /**
@@ -320,6 +325,7 @@
     .btn-refresh {
         border: 1px solid rgba(60,60,60,.26);
     }
+
 </style>
 
 <style>
